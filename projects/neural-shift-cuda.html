@@ -1,5 +1,23 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>neural_shift_cuda · Parallel Kernel Aggregation · Trishit Mukherjee</title><meta name="description" content="CUDA acceleration for learned kernel denoisers: fused shift gathering, batched neural weight prediction, parallel aggregation, and PyTorch autograd. Connected to NECTR."><meta property="og:title" content="neural_shift_cuda · Parallel Kernel Aggregation"><meta property="og:description" content="CUDA acceleration for learned kernel denoisers and NECTR, with reported training-step speedups."><meta property="og:type" content="website"><link rel="icon" href="../assets/favicon.svg" type="image/svg+xml"><link rel="stylesheet" href="../styles.css"><script src="../site.js" defer></script>
-<script>
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>neural_shift_cuda · Parallel Kernel Aggregation · Trishit Mukherjee</title>
+    <meta
+      name="description"
+      content="CUDA acceleration for learned kernel denoisers: fused shift gathering, batched neural weight prediction, parallel aggregation, and PyTorch autograd. Connected to NECTR."
+    >
+    <meta property="og:title" content="neural_shift_cuda · Parallel Kernel Aggregation">
+    <meta
+      property="og:description"
+      content="CUDA acceleration for learned kernel denoisers and NECTR, with reported training-step speedups."
+    >
+    <meta property="og:type" content="website">
+    <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="../styles.css">
+    <script src="../site.js" defer></script>
+    <script>
   MathJax = {
     tex: {
       inlineMath: [['$', '$'], ['\\(', '\\)']],
@@ -7,21 +25,261 @@
     }
   };
 </script>
-<script
-  id="MathJax-script"
-  async
-  src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+    <script
+      id="MathJax-script"
+      async
+      src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"
+    >
 </script>
-</head><body>
-<a class="skip" href="#main">Skip to content</a><header class="header"><div class="wrap header-inner"><a class="brand" href="../index.html"><span class="monogram" aria-hidden="true">TM</span><span>Trishit Mukherjee</span></a><nav class="nav" aria-label="Main navigation"><a href="../index.html#research">Research</a><a href="nectr.html">NECTR</a><a href="../assets/trishit-mukherjee-cv.pdf">CV</a><a href="../index.html#contact">Contact</a></nav></div></header>
-<main id="main" class="wrap"><p class="breadcrumbs"><a href="../index.html#research">Selected research</a> / neural_shift_cuda</p>
-<!-- EDIT: software project title, role, and links -->
-<section class="detail-hero"><p class="eyebrow">Research software · C++ / CUDA / PyTorch</p><h1>neural_<wbr>shift_<wbr>cuda</h1><p class="authors"><strong>Trishit Mukherjee</strong> · Lead developer</p><div class="link-row"><a class="button primary" href="https://github.com/trishitmg/neural_shift_cuda">Source code</a><a class="button" href="https://github.com/trishitmg/neural_shift_cuda#install">Installation</a><a class="button" href="#benchmarks">Benchmarks</a><a class="button" href="nectr.html">Related research: NECTR</a></div><p class="detail-lead">Parallelize the kernel aggregation behind learned denoisers, from gathering shifted pixels to reducing their weighted contributions.</p></section>
-<figure class="wide-figure"><button class="figure-link" data-enlarge="neural_shift_cuda · reported training-step speedups" aria-label="Enlarge reported speedup chart"><img src="../assets/cuda-speedups.svg" alt="Reported full-step speedups: NeKDe-Attn 2.23$\times$, GASD-Attn 1.31$\times$, NECTR1 1.61$\times$, NECTR2 1.33$\times$" width="1100" height="500"></button><figcaption>Full training-step speedups reported in the repository README. Batch size 8, image size 64 $\times$ 64, radius 5, fp32. Detailed timings and source links appear below.</figcaption></figure>
-<!-- EDIT: relationship to the kernel-denoiser research -->
-<section class="section"><div class="detail-grid"><div><p class="eyebrow" style="margin-bottom:18px">The connection</p><h2>Make learned kernel<br>aggregation practical.</h2></div><div><p>Kernel denoisers restore each pixel by aggregating information from shifted neighbors with learned weights. This is the computational core of NECTR and related neural kernel denoisers.</p><p>A serial implementation processes shifts one at a time, repeatedly gathering pixels, evaluating the weight network, and updating a weighted numerator and normalization factor. This creates many small GPU operations and sequential accumulation steps.</p><p>I developed neural_shift_cuda to batch the shift-dependent work and implement aggregation with fused CUDA kernels. The extension integrates with the original NECTR models and attention-based kernel denoisers through model patches.</p><div class="formula" aria-label="Kernel denoising aggregation"> $$ U = \sum_{\pi} w_{\pi} \odot (P_{\pi}\,x) + P_{\pi}(w_{\pi} \odot x);\quad Z = \sum_{\pi} w_{\pi}\,;\quad D = U \oslash Z $$</div><p class="fine"> $P_{\pi}$ denotes a shift. The implementation also handles the applicable inverse-pair contributions and boundary masks. The acceleration preserves the aggregation formula; floating-point reductions are compared to the reference within numerical tolerances.</p><div class="link-row"><a class="button" href="nectr.html">Explore the NECTR construction</a></div></div></div><ul class="keypoints"><li><h3>Fused gathering</h3><p>Collect shifted inputs and validity masks together, including paired center/neighbor inputs for the weight predictor.</p></li><li><h3>Batched weight prediction</h3><p>Process the stacked shifts through the neural network, reducing the overhead of repeated per-shift calls.</p></li><li><h3>Parallel tree reduction</h3><p>Combine weighted image contributions and degrees across CUDA lanes using shared-memory reductions.</p></li></ul></section>
-<section class="section" style="border-top:1px solid var(--line)"><div class="section-heading"><h2>Parallelize the sum.</h2><p>The reduction dependency depth becomes logarithmic in the number of shifts, while total aggregation work still scales with the contributions.</p></div><figure class="wide-figure"><button class="figure-link" data-enlarge="neural_shift_cuda · parallel reduction diagram" aria-label="Enlarge parallel reduction diagram"><img src="../assets/cuda-reduction.svg" alt="Eight illustrative weighted contributions reduce in parallel through a tree to the numerator U and normalization Z" width="1100" height="550" loading="lazy"></button><figcaption>Conceptual tree with eight contributions. Each participating lane forms a weighted pixel and a weight; paired sums combine them into U and Z. The actual kernel supports the model’s shift set and includes inverse contributions where needed.</figcaption></figure></section>
-<!-- EDIT: reported benchmark data. Update the table, SVG chart, and captions together. -->
-<section class="section" id="benchmarks" style="border-top:1px solid var(--line)"><div class="section-heading"><h2>Reported benchmarks</h2><p>Median time for a complete forward-and-backward training step. Lower time is better.</p></div><div class="table-scroll" role="region" aria-label="Reported training benchmarks" tabindex="0"><table class="benchmark-table"><caption>Serial PyTorch shift loop versus neural_shift_cuda</caption><thead><tr><th scope="col">Model</th><th scope="col">Serial (ms)</th><th scope="col">Parallel (ms)</th><th scope="col">Speedup</th></tr></thead><tbody><tr><th scope="row">NeKDe-Attn</th><td>140.37</td><td>63.03</td><td><strong>2.23$\times$</strong></td></tr><tr><th scope="row">GASD-Attn</th><td>177.02</td><td>134.81</td><td><strong>1.31$\times$</strong></td></tr><tr><th scope="row">NECTR1</th><td>182.79</td><td>113.34</td><td><strong>1.61$\times$</strong></td></tr><tr><th scope="row">NECTR2</th><td>501.04</td><td>376.43</td><td><strong>1.33$\times$</strong></td></tr></tbody></table></div><p class="fine">Source: <a href="https://github.com/trishitmg/neural_shift_cuda/blob/835ebb86653e88b8b880293d9595cbbcb9371e1d/README.md#benchmarks">repository README benchmark tables</a>, checked 4 October 2026. All rows use B = 8, 64 $\times$ 64 images, R = 5, and fp32. The table does not specify the GPU model. These are reported results, rather than new measurements made for this page; speedups depend on the device, model, and workload.</p></section>
-<section class="section"><div class="detail-grid"><div><p class="eyebrow" style="margin-bottom:18px">Implementation</p><h2>GPU kernels with<br>PyTorch integration.</h2></div><div><p>The operators provide autograd support for image and weight inputs, with pure-PyTorch reference implementations for CPU execution and equivalence checks. Supported patches connect the kernels to NECTR and related attention models.</p><p>The current implementation also includes promoted accumulation dtypes, 64-bit indexing, and an optional max-shifted normalized aggregation path for positive weights or logits. These support reliable evaluation of the same normalized weighted average.</p><p>Fixed-guide caches can reuse learned weights during repeated reconstruction steps, avoiding unnecessary recomputation while applying the kernel operator to changing iterates.</p><div class="link-row"><a class="button" href="https://github.com/trishitmg/neural_shift_cuda#use">Integration examples</a><a class="button" href="https://github.com/trishitmg/neural_shift_cuda#test">Tests &amp; reproduction</a></div></div></div><div class="related"><a href="../index.html#research">All research</a><a href="nectr.html">Related project: NECTR · ICML 2026</a></div></section>
-</main><footer class="footer"><div class="wrap footer-inner"><span>© 2026 Trishit Mukherjee</span><span>Benchmark values from the project README.</span></div></footer><dialog class="lightbox" aria-label="Enlarged project figure"><div class="lightbox-header"><span class="lightbox-title"></span><button class="button" data-close>Close</button></div><img alt=""></dialog></body></html>
+  </head>
+  <body>
+    <a class="skip" href="#main">Skip to content</a>
+    <header class="header">
+      <div class="wrap header-inner">
+        <a class="brand" href="../index.html">
+          <span class="monogram" aria-hidden="true">TM</span><span>Trishit Mukherjee</span>
+        </a>
+        <nav class="nav" aria-label="Main navigation">
+          <a href="../index.html#research">Research</a>
+          <a href="nectr.html">NECTR</a>
+          <a href="../assets/trishit-mukherjee-cv.pdf">CV</a>
+          <a href="../index.html#contact">Contact</a>
+        </nav>
+      </div>
+    </header>
+    <main id="main" class="wrap">
+      <p class="breadcrumbs">
+        <a href="../index.html#research">Selected research</a> / neural_shift_cuda
+      </p>
+      <!-- EDIT: software project title, role, and links -->
+      <section class="detail-hero">
+        <p class="eyebrow">Research software · C++ / CUDA / PyTorch</p>
+        <h1>neural_<wbr>shift_<wbr>cuda</h1>
+        <p class="authors"><strong>Trishit Mukherjee</strong> · Lead developer</p>
+        <div class="link-row">
+          <a class="button primary" href="https://github.com/trishitmg/neural_shift_cuda">
+            Source code
+          </a>
+          <a class="button" href="https://github.com/trishitmg/neural_shift_cuda#install">
+            Installation
+          </a>
+          <a class="button" href="#benchmarks">Benchmarks</a>
+          <a class="button" href="nectr.html">Related research: NECTR</a>
+        </div>
+        <p class="detail-lead">
+          Parallelize the kernel aggregation behind learned denoisers, from gathering shifted
+          pixels to reducing their weighted contributions.
+        </p>
+      </section>
+      <figure class="wide-figure">
+        <button
+          class="figure-link"
+          data-enlarge="neural_shift_cuda · reported training-step speedups"
+          aria-label="Enlarge reported speedup chart"
+        >
+          <img src="../assets/cuda-speedups.svg" alt="Reported full-step speedups: NeKDe-Attn 2.23$\times$, GASD-Attn 1.31$\times$, NECTR1 1.61$\times$, NECTR2 1.33$\times$" width="1100" height="500">
+        </button>
+        <figcaption>
+          Full training-step speedups reported in the repository README. Batch size 8, image size
+          64 $\times$ 64, radius 5, fp32. Detailed timings and source links appear below.
+        </figcaption>
+      </figure>
+      <!-- EDIT: relationship to the kernel-denoiser research -->
+      <section class="section">
+        <div class="detail-grid">
+          <div>
+            <p class="eyebrow" style="margin-bottom:18px">The connection</p>
+            <h2>Make learned kernel<br>aggregation practical.</h2>
+          </div>
+          <div>
+            <p>
+              Kernel denoisers restore each pixel by aggregating information from shifted
+              neighbors with learned weights. This is the computational core of NECTR and related
+              neural kernel denoisers.
+            </p>
+            <p>
+              A serial implementation processes shifts one at a time, repeatedly gathering pixels,
+              evaluating the weight network, and updating a weighted numerator and normalization
+              factor. This creates many small GPU operations and sequential accumulation steps.
+            </p>
+            <p>
+              I developed neural_shift_cuda to batch the shift-dependent work and implement
+              aggregation with fused CUDA kernels. The extension integrates with the original
+              NECTR models and attention-based kernel denoisers through model patches.
+            </p>
+            <div class="formula" aria-label="Kernel denoising aggregation">
+              $$ U = \sum_{\pi} w_{\pi} \odot (P_{\pi}\,x) + P_{\pi}(w_{\pi} \odot x);\quad Z = \sum_{\pi} w_{\pi}\,;\quad D = U \oslash Z $$
+            </div>
+            <p class="fine">
+              $P_{\pi}$ denotes a shift. The implementation also handles the applicable
+              inverse-pair contributions and boundary masks. The acceleration preserves the
+              aggregation formula; floating-point reductions are compared to the reference within
+              numerical tolerances.
+            </p>
+            <div class="link-row">
+              <a class="button" href="nectr.html">Explore the NECTR construction</a>
+            </div>
+          </div>
+        </div>
+        <ul class="keypoints">
+          <li>
+            <h3>Fused gathering</h3>
+            <p>
+              Collect shifted inputs and validity masks together, including paired center/neighbor
+              inputs for the weight predictor.
+            </p>
+          </li>
+          <li>
+            <h3>Batched weight prediction</h3>
+            <p>
+              Process the stacked shifts through the neural network, reducing the overhead of
+              repeated per-shift calls.
+            </p>
+          </li>
+          <li>
+            <h3>Parallel tree reduction</h3>
+            <p>
+              Combine weighted image contributions and degrees across CUDA lanes using
+              shared-memory reductions.
+            </p>
+          </li>
+        </ul>
+      </section>
+      <section class="section" style="border-top:1px solid var(--line)">
+        <div class="section-heading">
+          <h2>Parallelize the sum.</h2>
+          <p>
+            The reduction dependency depth becomes logarithmic in the number of shifts, while
+            total aggregation work still scales with the contributions.
+          </p>
+        </div>
+        <figure class="wide-figure">
+          <button
+            class="figure-link"
+            data-enlarge="neural_shift_cuda · parallel reduction diagram"
+            aria-label="Enlarge parallel reduction diagram"
+          >
+            <img src="../assets/cuda-reduction.svg" alt="Eight illustrative weighted contributions reduce in parallel through a tree to the numerator U and normalization Z" width="1100" height="550" loading="lazy">
+          </button>
+          <figcaption>
+            Conceptual tree with eight contributions. Each participating lane forms a weighted
+            pixel and a weight; paired sums combine them into U and Z. The actual kernel supports
+            the model’s shift set and includes inverse contributions where needed.
+          </figcaption>
+        </figure>
+      </section>
+      <!-- EDIT: reported benchmark data. Update the table, SVG chart, and captions together. -->
+      <section class="section" id="benchmarks" style="border-top:1px solid var(--line)">
+        <div class="section-heading">
+          <h2>Reported benchmarks</h2>
+          <p>
+            Median time for a complete forward-and-backward training step. Lower time is better.
+          </p>
+        </div>
+        <div
+          class="table-scroll"
+          role="region"
+          aria-label="Reported training benchmarks"
+          tabindex="0"
+        >
+          <table class="benchmark-table">
+            <caption>Serial PyTorch shift loop versus neural_shift_cuda</caption>
+            <thead>
+              <tr>
+                <th scope="col">Model</th>
+                <th scope="col">Serial (ms)</th>
+                <th scope="col">Parallel (ms)</th>
+                <th scope="col">Speedup</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th scope="row">NeKDe-Attn</th>
+                <td>140.37</td>
+                <td>63.03</td>
+                <td><strong>2.23$\times$</strong></td>
+              </tr>
+              <tr>
+                <th scope="row">GASD-Attn</th>
+                <td>177.02</td>
+                <td>134.81</td>
+                <td><strong>1.31$\times$</strong></td>
+              </tr>
+              <tr>
+                <th scope="row">NECTR1</th>
+                <td>182.79</td>
+                <td>113.34</td>
+                <td><strong>1.61$\times$</strong></td>
+              </tr>
+              <tr>
+                <th scope="row">NECTR2</th>
+                <td>501.04</td>
+                <td>376.43</td>
+                <td><strong>1.33$\times$</strong></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="fine">
+          Source:
+          <a href="https://github.com/trishitmg/neural_shift_cuda/blob/835ebb86653e88b8b880293d9595cbbcb9371e1d/README.md#benchmarks">repository
+          README benchmark tables</a>, checked 4 October 2026. All rows use B = 8, 64
+          $\times$ 64 images, R = 5, and fp32. The table does not specify the GPU model.
+          These are reported results, rather than new measurements made for this page; speedups
+          depend on the device, model, and workload.
+        </p>
+      </section>
+      <section class="section">
+        <div class="detail-grid">
+          <div>
+            <p class="eyebrow" style="margin-bottom:18px">Implementation</p>
+            <h2>GPU kernels with<br>PyTorch integration.</h2>
+          </div>
+          <div>
+            <p>
+              The operators provide autograd support for image and weight inputs, with
+              pure-PyTorch reference implementations for CPU execution and equivalence checks.
+              Supported patches connect the kernels to NECTR and related attention models.
+            </p>
+            <p>
+              The current implementation also includes promoted accumulation dtypes, 64-bit
+              indexing, and an optional max-shifted normalized aggregation path for positive
+              weights or logits. These support reliable evaluation of the same normalized weighted
+              average.
+            </p>
+            <p>
+              Fixed-guide caches can reuse learned weights during repeated reconstruction steps,
+              avoiding unnecessary recomputation while applying the kernel operator to changing
+              iterates.
+            </p>
+            <div class="link-row">
+              <a class="button" href="https://github.com/trishitmg/neural_shift_cuda#use">
+                Integration examples
+              </a>
+              <a class="button" href="https://github.com/trishitmg/neural_shift_cuda#test">
+                Tests &amp; reproduction
+              </a>
+            </div>
+          </div>
+        </div>
+        <div class="related">
+          <a href="../index.html#research">All research</a>
+          <a href="nectr.html">Related project: NECTR · ICML 2026</a>
+        </div>
+      </section>
+    </main>
+    <footer class="footer">
+      <div class="wrap footer-inner">
+        <span>© 2026 Trishit Mukherjee</span>
+        <span>Benchmark values from the project README.</span>
+      </div>
+    </footer>
+    <dialog class="lightbox" aria-label="Enlarged project figure">
+      <div class="lightbox-header">
+        <span class="lightbox-title"></span>
+        <button class="button" data-close>Close</button>
+      </div>
+      <img alt="">
+    </dialog>
+  </body>
+</html>
