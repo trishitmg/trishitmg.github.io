@@ -125,10 +125,31 @@
               \]
             </div>
             <p>
-              Inverse-consistent weights make the unnormalized kernel symmetric. The paper’s
-              symmetrization and normalization then yield a nonnegative, symmetric stochastic
-              denoiser that is globally nonexpansive. The normalized aggregation above precedes
-              this final symmetrization.
+              Inverse-consistent weights make the unnormalized kernel symmetric, but the
+              row-normalized operator \(\mathcal D\) need not be symmetric. For each fixed
+              reference \(\xi\), NECTR applies the paper’s symmetrization protocol using the
+              degree vector \(\delta=\delta(\xi)\). With \(\boldsymbol e\) denoting the
+              all-ones vector, first compute
+            </p>
+            <div class="formula" aria-label="Degree-normalized row sums for symmetrization">
+              \[ \widehat{\boldsymbol e}=\delta^{1/2}\odot\mathcal D\bigl(\boldsymbol e\oslash\delta^{1/2};\,\xi\bigr). \]
+            </div>
+            <p>
+              Rescale the symmetric degree-normalized operator by
+              \(\|\widehat{\boldsymbol e}\|_\infty\), then add a diagonal correction to
+              restore unit row sums:
+            </p>
+            <div class="formula" aria-label="Symmetric stochastic denoiser">
+              \[ 
+              \mathcal D_{\mathrm{sym}}(x;\,\xi)
+              =\frac{1}{\|\widehat{\boldsymbol e}\|_\infty}
+              \delta^{1/2}\odot\mathcal D\bigl(x\oslash\delta^{1/2};\,\xi\bigr) +
+              \left(\boldsymbol e-\frac{\widehat{\boldsymbol e}}{\|\widehat{\boldsymbol e}\|_\infty}\right)\odot x. \]
+            </div>
+            <p>
+              Square roots and vector divisions are elementwise. The resulting denoiser is
+              nonnegative, symmetric, stochastic, and globally nonexpansive for the fixed
+              reference. The PnP-HQS iteration uses this symmetrized operator:
             </p>
             <div class="formula" aria-label="PnP-HQS iteration">
               \[ 
@@ -145,7 +166,7 @@
               The convergence result concerns the symmetrized denoiser with a frozen reference
               \(\xi\). It assumes positive inverse-consistent weights, an inverse-closed
               permutation set containing the identity, transitivity, and \(\mathbf{A} \boldsymbol{e} \neq 0\). The
-              short adaptive warm-up precedes the fixed-reference phase.
+              short adaptive warm-up phase, $k < K $, precedes the fixed-reference phase, $k \geqslant K$.
             </p>
           </div>
         </div>
