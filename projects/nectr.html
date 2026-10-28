@@ -96,38 +96,34 @@
               denoising power.
             </p>
             <p>
-              NECTR separates weight prediction from image aggregation. A neural network predicts
-              positive, spatially varying weights using a reference image and its permuted
-              variants. With the reference fixed, the denoising operator is linear in the
-              reconstruction variable.
+              NECTR separates weight prediction from image aggregation. A neural network with learned parameters \(\theta\) predicts positive, spatially varying weight maps \(\omega_\pi(\xi)\) from a reference image \(\xi\) and its permuted variants \(P_\pi\,\xi\): 
+              <div class="formula" aria-label="Neural weight predictor">
+              \[
+              \omega_\pi(\xi) = \mathcal{N}_\theta(\xi,P_\pi\,\xi). 
+              \]
+              </div>
             </p>
             <p>
-              Kernel aggregation uses one predicted weight map for each inverse pair of cyclic
-              shifts. Let \(\mathcal I_+\) contain one representative from each nonidentity
-              pair, let \(P_\pi\) denote a shift operator, and write \(\omega_\pi\) for the
-              weight map predicted from the fixed reference. Each forward contribution
-              \(\omega_\pi\odot(P_\pi x)\) is paired with its inverse-shift contribution
-              \(P_{\pi^{-1}}(\omega_\pi\odot x)=P_\pi^{\top}(\omega_\pi\odot x)\), so the
-              inverse shift needs no separate prediction. The identity contributes once, with
-              its fixed factor absorbed into its learned weight. For a square window of radius
-              \(R\) with no nonidentity self-inverse shifts, this requires only
-              \(J=2R^2+2R+1\) weight maps instead of \((2R+1)^2\). The accumulated
-              pixels are normalized elementwise by the degree vector \(\delta\), where
-              \(\odot\) denotes the Hadamard product and \(\oslash\) elementwise division:
+              For cyclic shifts, \(P_\pi\) is a shift operator and \(\mathcal I_+\) selects
+              one representative per nonidentity inverse pair. The identity is counted once;
+              inverse contributions reuse the predicted weights. A radius-\(R\) window without
+              nonidentity self-inverse shifts needs \(J=2R^2+2R+1\) weight maps rather than
+              \((2R+1)^2\). Here \(\odot\) and \(\oslash\) denote elementwise multiplication
+              and division.
             </p>
             <div class="formula" aria-label="Inverse-pair kernel aggregation">
               \[
               \begin{aligned}
-              \mathcal Kx = \omega_{\mathrm{id}}\odot x &amp;+ \sum_{\pi\in\mathcal I_+} \bigl(\omega_\pi\odot(P_\pi x) + P_{\pi^{-1}}(\omega_\pi\odot x)\bigr), \\ \\
-              \delta = \mathcal K \boldsymbol{e}, \qquad &amp; \qquad \mathcal D(x) = \mathcal Kx\oslash\delta.
+              \mathcal K(x;\xi) = \omega_{\mathrm{id}}(\xi)\odot x + \sum_{\pi\in\mathcal I_+} \bigl(\omega_\pi(\xi) &amp;\odot(P_\pi\,x) + P_\pi^{\top}(\omega_\pi(\xi)\odot x)\bigr), \\ \\
+              \mathcal D(x;\xi) = \mathcal K(x;\xi)\oslash\delta(\xi), \qquad &amp; \quad \delta(\xi) = \mathcal K(\boldsymbol{e};\xi).
               \end{aligned}
-              
               \]
             </div>
             <p>
+              With \(\theta\) and \(\xi\) fixed, the denoising operator is linear in the reconstruction variable.
               Inverse-consistent weights make the unnormalized kernel symmetric, but the
               row-normalized operator \(\mathcal D\) need not be symmetric. For each fixed
-              reference \(\xi\), NECTR applies the paper’s symmetrization protocol using the
+              reference \(\xi\), NECTR applies the Sreehari et al.’s symmetrization protocol using the
               degree vector \(\delta=\delta(\xi)\). With \(\boldsymbol e\) denoting the
               all-ones vector, first compute
             </p>
@@ -166,7 +162,7 @@
               The convergence result concerns the symmetrized denoiser with a frozen reference
               \(\xi\). It assumes positive inverse-consistent weights, an inverse-closed
               permutation set containing the identity, transitivity, and \(\mathbf{A} \boldsymbol{e} \neq 0\). The
-              short adaptive warm-up phase, $k < K $, precedes the fixed-reference phase, $k \geqslant K$.
+              short adaptive warm-up precedes the fixed-reference phase.
             </p>
           </div>
         </div>
