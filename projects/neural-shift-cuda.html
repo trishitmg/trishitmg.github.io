@@ -16,6 +16,7 @@
     <meta property="og:type" content="website">
     <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
     <link rel="stylesheet" href="../styles.css">
+    <script src="../theme.js"></script>
     <script src="../site.js" defer></script>
     <script>
   MathJax = {
@@ -44,6 +45,7 @@
           <a href="nectr.html">NECTR</a>
           <a href="../assets/trishit-mukherjee-cv.pdf">CV</a>
           <a href="../index.html#contact">Contact</a>
+          <button class="theme-toggle" type="button" data-theme-toggle aria-label="Change colour theme">Theme</button>
         </nav>
       </div>
     </header>
@@ -77,7 +79,7 @@
           data-enlarge="neural_shift_cuda · reported training-step speedups"
           aria-label="Enlarge reported speedup chart"
         >
-          <img src="../assets/cuda-speedups.svg" alt="Reported full-step speedups: NECTR DRUNet-Attn 2.23×, NECTR-Proj 1.61×, NECTR-UNet 1.33×" width="1100" height="500">
+          <img data-themed src="../assets/cuda-speedups.svg" alt="Reported full-step speedups: NECTR DRUNet-Attn 2.23×, NECTR-Proj 1.61×, NECTR-UNet 1.33×" width="1100" height="500">
         </button>
         <figcaption>
           Full training-step speedups reported in the repository README. Batch size 8, image size
@@ -188,7 +190,7 @@
             data-enlarge="neural_shift_cuda · parallel reduction diagram"
             aria-label="Enlarge parallel reduction diagram"
           >
-            <img src="../assets/cuda-reduction.svg" alt="Eight illustrative weighted contributions reduce in parallel through a tree to the kernel numerator K x and degree delta" width="1100" height="550" loading="lazy">
+            <img data-themed src="../assets/cuda-reduction.svg" alt="Eight illustrative weighted contributions reduce in parallel through a tree to the kernel numerator K x and degree delta" width="1100" height="550" loading="lazy">
           </button>
           <figcaption>
             Conceptual tree with eight contributions. Each participating lane forms a weighted

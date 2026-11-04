@@ -17,6 +17,7 @@
     <script src="https://kit.fontawesome.com/de9e9f20a8.js" crossorigin="anonymous"></script>
     <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
     <link rel="stylesheet" href="styles.css">
+    <script src="theme.js"></script>
     <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css">
     <link rel="stylesheet" href="assets/fontawesome/css/brands.min.css">
   </head>
@@ -32,6 +33,7 @@
           <a href="#about">About</a>
           <a href="assets/trishit-mukherjee-cv.pdf">CV</a>
           <a href="#contact">Contact</a>
+          <button class="theme-toggle" type="button" data-theme-toggle aria-label="Change colour theme">Theme</button>
         </nav>
       </div>
     </header>
@@ -161,7 +163,7 @@
         <article class="project">
           <figure class="project-visual">
             <a href="projects/neural-shift-cuda.html" aria-label="Explore neural_shift_cuda">
-              <img src="assets/cuda-speedups.svg" alt="Reported full training-step speedups for four kernel denoisers, up to 2.23×" width="1100" height="500" loading="lazy">
+              <img data-themed src="assets/cuda-speedups.svg" alt="Reported full training-step speedups for four kernel denoisers, up to 2.23×" width="1100" height="500" loading="lazy">
             </a>
             <figcaption>
               CUDA acceleration for kernel aggregation. Reported full-step speedups.

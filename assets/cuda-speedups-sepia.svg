@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 500" role="img" aria-labelledby="title desc">
+  <title id="title">Reported full training-step speedups for neural_shift_cuda</title>
+  <desc id="desc">NECTR DRUNet-Attn 2.23 times, NECTR-Proj 1.61 times, and NECTR-UNet 1.33 times. README benchmarks at batch size 8, image size 64 by 64, window radius 5, fp32.</desc>
+  <rect width="1100" height="500" fill="#eef1e8"/>
+  <g font-family="Arial,sans-serif" fill="#163632">
+    <text x="45" y="55" font-size="25" font-weight="bold">Parallel kernel aggregation</text>
+    <text x="45" y="89" font-size="18" fill="#5e7067">Reported full-step speedup · forward + backward</text>
+    <g stroke="#d9dfd5">
+      <path d="M270 125V390M515 125V390M760 125V390M882 125V390"/>
+    </g>
+    <path d="M515 125V390" stroke="#5e7067" stroke-dasharray="5 5"/>
+    <g font-size="18">
+      <text x="45" y="176">NECTR DRUNet-Attn</text>
+      <text x="45" y="271">NECTR-Proj</text>
+      <text x="45" y="366">NECTR-UNet</text>
+    </g>
+    <g fill="#4d7056">
+      <rect x="270" y="151" width="546.35" height="38" rx="3"/>
+      <rect x="270" y="246" width="394.45" height="38" rx="3"/>
+      <rect x="270" y="341" width="325.85" height="38" rx="3"/>
+    </g>
+    <g font-size="23" font-weight="bold">
+      <text x="832" y="178">2.23×</text>
+      <text x="681" y="273">1.61×</text>
+      <text x="612" y="368">1.33×</text>
+    </g>
+    <g font-size="16" fill="#5e7067">
+      <text x="266" y="420">0</text>
+      <text x="503" y="420">1×</text>
+      <text x="748" y="420">2×</text>
+      <text x="864" y="420">2.5×</text>
+      <text x="45" y="468">README medians · B = 8 · 64 × 64 · R = 5 · fp32</text>
+    </g>
+  </g>
+</svg>

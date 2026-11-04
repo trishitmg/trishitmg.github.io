@@ -24,8 +24,9 @@ See [GITHUB_PAGES_GUIDE.md](GITHUB_PAGES_GUIDE.md) for the full setup, editing, 
 | `projects/nectr.html` | NECTR project text, links, figures, and citation |
 | `projects/costa.html` | CoSTA project text, links, figures, and citation |
 | `projects/neural-shift-cuda.html` | CUDA aggregation explanation, reported benchmarks, and code links |
-| `styles.css` | Shared colors, typography, layout, and mobile styles |
+| `styles.css` | Shared colors, typography, layout, and mobile styles. Theme palettes live in the `:root` blocks at the start and end of the file |
 | `site.js` | Image comparisons, figure enlargement, and citation copying |
+| `theme.js` | Light / sepia / dark theme toggle (remembers the visitor's choice) |
 | `assets/` | Figure crops, favicon, and CV PDF |
 | `.nojekyll` | Publishes static files without Jekyll processing |
 
